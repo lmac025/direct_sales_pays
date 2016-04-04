@@ -1,0 +1,42 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{{ title }} {% trans ' - Held Pays' %}{% endblock %}
+{% block content %}
+    <div class="row-fluid">
+        <div class="span10 offset1">
+            <div class="progress progress-striped active" style="margin:20px;"><div class="bar" style="width:0%;"></div></div>
+            <ul class="contractors" id="contractors">
+            </ul>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $.ajax({
+                url: '{% url "direct.pays.views.ajax.fetch_held_paylines" request.info.current_projectname %}?contractors=1',
+                type: 'GET',
+                dataType: 'json',
+                success: function(json) {
+                    l = json.length;
+                    $.each(json, function(k,id) {
+                        $.ajax({
+                            url: '{% url "direct.pays.views.ajax.fetch_held_paylines" request.info.current_projectname %}?id='+id,
+                            type: 'GET',
+                            dataType: 'html',
+                            success: function(html) {
+                                $('#contractors').prepend(html)
+                                l--
+                                progress = ((json.length - l)/json.length)*100
+                                $('.progress .bar').attr('style','width:'+progress+'%')
+                                if(l==0) {
+                                    $('.progress').hide()
+                                    init('{{request.info.current_projectname}}')
+                                }
+                            }
+                        })
+                    })
+                }
+            });
+        })
+    </script>
+{% endblock %}

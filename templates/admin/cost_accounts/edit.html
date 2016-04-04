@@ -1,0 +1,40 @@
+{% load functions %}
+{% load url from future %}
+<form class="load-form">
+    <table>
+        <tr>
+            <td>
+                {{ form.location|render_label }}
+                {{ form.location.errors }}
+                {{ form.location }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ form.cost_account|render_label }}
+                {{ form.cost_account.errors }}
+                {{ form.cost_account }}
+            </td>
+            <td>
+                {{ form.cost_category_2|render_label }}
+                {{ form.cost_category_2.errors }}
+                {{ form.cost_category_2 }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ form.cost_category_3|render_label }}
+                {{ form.cost_category_3.errors }}
+                {{ form.cost_category_3 }}
+            </td>
+            <td>
+                {{ form.cost_category_4|render_label }}
+                {{ form.cost_category_4.errors }}
+                {{ form.cost_category_4 }}
+            </td>
+        </tr>
+    </table>
+    <div class="form-actions">
+        <input type="button" value="Submit" class="btn btn-primary form-submit" />
+    </div>
+</form>

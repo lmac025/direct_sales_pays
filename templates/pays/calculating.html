@@ -1,0 +1,53 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{{ title }} {% trans ' - Calculating' %}{% endblock %}
+{% block content %}
+    <div class="row-fluid">
+        <div class="span6 offset3">
+            <ul class="unstyled">
+                {% for step, data in steps.items %}
+                    <li data-steps="{{data.sub_steps|length}}" id="{{step}}">
+                        {{ data.step }}
+                        <div class="progress progress-striped active"><div class="bar" style="width:0%"></div></div>
+                        <ul class="unstyled" style="margin-left:20px;">
+                            {% for sub_step, description in data.sub_steps.items %}
+                                <li id="{{step}}_{{sub_step}}"><i class="icon-ok" style="visibility:hidden"></i>&nbsp;{{ description }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <script>
+        setInterval( function(){
+            $.ajax({
+                url: '/direct/pays/{{request.info.current_projectname}}/ajax/check_pay_run/{{pay_run_id}}/',
+                type: 'GET',
+                dataType: 'json',
+                success: function(json) {
+                    if(json.steps) {
+                        $.each(json.steps, function(step, sub_steps) {
+                            var steps = $('#'+step).attr('data-steps')
+                            var progress = $('#'+step).find('.progress .bar')
+                            if(sub_steps !== undefined) {
+                                var perc = (sub_steps.length/steps)*100
+
+                                progress.attr('style', 'width:'+perc+'%')
+
+                                $.each(sub_steps, function(k, sub_step) {
+                                    $('#'+step+'_'+sub_step).find('.icon-ok').attr('style', '')
+                                })
+                            }
+                        })
+                    }
+
+                    if(json.calculated) {
+                        window.location = '/direct/pays/{{request.info.current_projectname}}/?c={{cycle_id}}&pr={{pay_run_id}}&failed='+json.failed;
+                    }
+                }
+            });
+        }, 1000);
+    </script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% load functions %}
+{% load url from future %}
+<form class="load-form">
+    <table>
+        <tr>
+            <td>
+                {{ form.finance_code|render_label }}
+                {{ form.finance_code.errors }}
+                {{ form.finance_code }}
+            </td>
+            <td>
+                {{ form.aurion_finance_code|render_label }}
+                {{ form.aurion_finance_code.errors }}
+                {{ form.aurion_finance_code }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ form.description|render_label }}
+                {{ form.description.errors }}
+                {{ form.description }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                {{ form.addition|render_label }}
+                {{ form.addition.errors }}
+                {{ form.addition }}
+            </td>
+            <td>
+                {{ form.invoice|render_label }}
+                {{ form.invoice.errors }}
+                {{ form.invoice }}
+            </td>
+        </tr>
+    </table>
+    <div class="form-actions">
+        <input type="button" value="Add" class="btn btn-primary form-submit"/>
+    </div>
+</form>

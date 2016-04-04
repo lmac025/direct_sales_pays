@@ -1,0 +1,33 @@
+{% extends "common/projects.html" %}
+{% load url from future %}
+{% block styles %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}direct/css/pays.css" />
+{% endblock %}
+{% block scripts %}
+    <script src="{{ STATIC_URL }}direct/js/pays.js"></script>
+{% endblock %}
+{% block link_list %}
+    {% load functions %}
+    <ul class="nav nav-pills">
+        <li data-view='direct.pays.views.pays.index'><a href="/direct/pays/{{request.info.current_projectname}}">Home</a></li>
+        <li data-view='direct.pays.views.pays.search'><a href="{% url "pays.views.pays.search" request.info.current_projectname %}">Search</a></li>
+        <li data-view='direct.pays.views.pays.add' data-requires='direct.pays.admin'>
+            <a href="{% url "pays.views.pays.add" request.info.current_projectname%}">Add Payline</a>
+        </li>
+        <li data-view='direct.pays.views.pays.upload' data-requires='direct.pays.admin'>
+            <a href="{% url "pays.views.pays.upload" request.info.current_projectname %}">Upload Paylines</a>
+        </li>
+        <li data-view='direct.pays.views.pays.held' data-requires='direct.pays.admin'>
+            <a href="{% url "pays.views.pays.held" request.info.current_projectname %}">Held Paylines</a>
+        </li>
+        <li data-view='direct.pays.views.pays.perm_held' data-requires='direct.pays.admin'>
+            <a href="{% url "pays.views.pays.perm_held" request.info.current_projectname %}">Permanently Held Paylines</a>
+        </li>
+        <li data-view='direct.pays.views.admin.finance_codes' data-requires='direct.pays.admin'>
+            <a href="{% url "pays.views.admin.finance_codes" request.info.current_projectname %}">Finance Codes</a>
+        </li>
+        <li data-view='direct.pays.views.admin.cost_accounts' data-requires='direct.pays.admin'>
+            <a href="{% url "pays.views.admin.cost_accounts" request.info.current_projectname %}">Cost Accounts</a>
+        </li>
+    </ul>
+{% endblock %}

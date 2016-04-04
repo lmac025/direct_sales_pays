@@ -1,0 +1,155 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% load functions %}
+{% block title %}{{ title }} {% trans ' - Search Pays' %}{% endblock %}
+{% block content %}
+    <form action="{% url "pays.views.pays.search" request.info.current_projectname %}" method="get">
+        <div class="row-fluid">
+            <div class="span6 offset3">
+                <table class="table table-unbordered table-condensed">
+                    <tr>
+                        <td>
+                            <label for="id_cycle">{{form.cycle.label}}</label>
+                            {{ form.cycle }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="id_location">{{form.location.label}}</label>
+                            {{ form.location }}
+                        </td>
+                        <td>
+                            <label for="id_finance_code">{{form.finance_code.label}}</label>
+                            {{ form.finance_code }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="id_sales_code">{{form.sales_code.label}}</label>
+                            {{ form.sales_code }}
+                        </td>
+                        <td>
+                            <label for="id_payroll">{{form.payroll.label}}</label>
+                            {{ form.payroll.errors }}
+                            {{ form.payroll }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="id_application_id">{{form.application_id.label}}</label>
+                            {{ form.application_id }}
+                        </td>
+                        <td>
+                            <label for="id_pay_id">{{form.pay_id.label}}</label>
+                            {{ form.pay_id.errors }}
+                            {{ form.pay_id }}
+                        </td>
+                    </tr>
+                </table>
+                <input type="Submit" value="Search" class="btn">
+            </div>
+        </div>
+    </form>
+    {% if paylines %}
+        <div class="row-fluid">
+            <a class="offset2" href="{% url "pays.views.pays.search" request.info.current_projectname %}?{{query_string}}&fmt=excel">Export to Excel</a>
+        </div>
+    {% endif %}
+    <div class="row-fluid">
+        <div class="span8 offset2">
+            <ul class="contractors">
+                {% for contractor_id, contractor_data in paylines.items %}
+                    <li>
+                        <span child="{{contractor_id}}_cycles">
+                            <div class="display_main expand">Payroll: {{contractor_data.contractor.payroll}} | Sales Code: {{contractor_data.contractor.sales_code}} | {{contractor_data.contractor.name}}</div>
+                            <div style="clear:both"></div>
+                        </span>
+                        <ul class="cycles {{contractor_id}}_cycles">
+                            {% for cycle_id, cycle_data in contractor_data.cycles.items %}
+                                <li>
+                                    <span child="{{contractor_id}}_{{cycle_id}}_finance_codes">
+                                        <div class="display_held_main expand">{{cycle_data.cycle.cycle_date}}</div>
+                                        <div style="clear:both"></div>
+                                    </span>
+                                    <ul class="finance_codes {{contractor_id}}_{{cycle_id}}_finance_codes">
+                                        {% for finance_code_id, finance_code_data in cycle_data.finance_codes.items %}
+                                            <li>
+                                                <span child="{{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_paylines">
+                                                    <div class="display_main expand">{{finance_code_data.finance_code.description}}</div>
+                                                    <div style="clear:both"></div>
+                                                </span>
+                                                <ul class="paylines {{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_paylines">
+                                                    {% for payline in finance_code_data.paylines %}
+                                                        <li>
+                                                            <span>
+                                                                <div class="display_main">
+                                                                    {% if payline.query_string and config.url %}
+                                                                        <a href="{{config.url}}{{payline.query_string}}" target="new">{{payline.details}}</a>
+                                                                    {% else %}
+                                                                        {{payline.details}}
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="display_manual">{% if payline.manual %}<div class="manual"></div>{% endif %}</div>
+                                                                <div class="display_value">{{payline.value|floatformat:2|dollarformat}}</div>
+                                                                <div class="display_gst">{{payline.gst_value|floatformat:2|dollarformat}}</div>
+                                                                {% if payline.perm_held %}
+                                                                    <div class="display_links ajax" type="Payline" method="retrieve" payline_id="{{payline.id}}" feedback="{{payline.id}}_retrieving">Retrieve Payline</div>
+                                                                    <div class="display_links hidden {{payline.id}}_retrieving">
+                                                                        Retrieving<div class="feedback_loader"></div>
+                                                                    </div>
+                                                                {% else %}
+                                                                    {% if payline.cycle.locked %}
+                                                                        {% if payline.held and not payline.reference_payline = None %}
+                                                                            <div class="display_links">
+                                                                                Held and Released
+                                                                            </div>
+                                                                        {% endif %}
+                                                                        {% if payline.held and payline.reference_payline = None %}
+                                                                            <div class="display_links ajax remove" type="Payline" method="perm_hold" payline_id="{{payline.id}}" feedback="{{payline.id}}_removing"></div>
+                                                                            <div class="display_links hidden {{payline.id}}_removing">
+                                                                                <div class="feedback_loader"></div>
+                                                                            </div>
+                                                                            <div class="display_links" type="Payline" method="release" payline_id="{{payline.id}}" feedback="{{payline.id}}_releasing">{{release_form.c}}</div>
+                                                                            <div class="display_links hidden {{payline.id}}_releasing">
+                                                                                Releasing<div class="feedback_loader"></div>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    {% else %}
+                                                                        {% if not payline.held %}
+                                                                            <div class="display_links ajax remove" type="Payline" method="remove" payline_id="{{payline.id}}" feedback="{{payline.id}}_removing"></div>
+                                                                            <div class="display_links hidden {{payline.id}}_removing">
+                                                                                <div class="feedback_loader"></div>
+                                                                            </div>
+                                                                            <div class="display_links ajax" type="Payline" method="hold" payline_id="{{payline.id}}" feedback="{{payline.id}}_holding">Hold Payline</div>
+                                                                            <div class="display_links hidden {{payline.id}}_holding">
+                                                                                Holding<div class="feedback_loader"></div>
+                                                                            </div>
+                                                                        {% else %}
+                                                                            <div class="display_links ajax" type="Payline" method="unhold" payline_id="{{payline.id}}" feedback="{{payline.id}}_unholding">Unhold Payline</div>
+                                                                            <div class="display_links hidden {{payline.id}}_unholding">
+                                                                                Unholding<div class="feedback_loader"></div>
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                                <div style="clear:both"></div>
+                                                            </span>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <script>
+        $(document).ready(init('{{request.info.current_projectname}}'))
+    </script>
+{% endblock %}

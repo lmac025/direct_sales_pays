@@ -1,0 +1,161 @@
+{% load functions %}
+{% load url from future %}
+{% for contractor_id, contractor_data in paylines.items %}
+    <li>
+        <span child="{{contractor_id}}_finance_codes">
+            <div class="display_main expand">Payroll: {{contractor_data.contractor.payroll}} | Sales Code: {{contractor_data.contractor.sales_code}} | {{contractor_data.contractor.name}}</div>
+            <div class="display_manual">{% if contractor_data.manual %}<div class="manual"></div>{% endif %}</div>
+            <div class="display_pdf">
+                {% if_has_permission 'direct.pays.admin' request.info.current_projectname %}
+                    {% if not current_cycle.pay_date == None %}
+                        {% if not config.commission_statement == None %}
+                            <div class="pdf" id="{{contractor_id}}" cycle="{{current_cycle.id}}"></div>
+                        {% endif %}
+                    {% endif %}
+                {% endif_has_permission %}
+            </div>
+            <div class="display_value">{{contractor_data.total|floatformat:2|dollarformat}}</div>
+            <div class="display_gst">{{contractor_data.total_gst|floatformat:2|dollarformat}}</div>
+            {% if_has_permission 'direct.pays.admin' request.info.current_projectname %}
+                {% if not current_cycle.locked %}
+                    <div class="display_links ajax" type="Contractor" method="hold" contractor_id="{{contractor_id}}" pay_run_id="{{pay_run_id}}" cycle_id="{{cycle_id}}" feedback="{{contractor_id}}_holding">
+                        Hold Contractor
+                    </div>
+                    <div class="display_links hide {{contractor_id}}_holding">
+                        Holding<div class="feedback_loader"></div>
+                    </div>
+                {% endif %}
+            {% endif_has_permission %}
+            <div style="clear:both"></div>
+        </span>
+        <ul class="finance_codes hide {{contractor_id}}_finance_codes">
+            {% for finance_code_id, finance_code_data in contractor_data.finance_codes.items %}
+                <li>
+                    <span child="{{contractor_id}}_{{finance_code_id}}_paylines">
+                        <div class="display_main expand">{{finance_code_data.finance_code.description}}</div>
+                        <div class="display_manual">{% if finance_code_data.manual %}<div class="manual"></div>{% endif %}</div>
+                        <div class="display_pdf"></div>
+                        <div class="display_value">{{finance_code_data.total|floatformat:2|dollarformat}}</div>
+                        <div class="display_gst">{{finance_code_data.total_gst|floatformat:2|dollarformat}}</div>
+                        {% if_has_permission 'direct.pays.admin' request.info.current_projectname %}
+                            {% if not current_cycle.locked %}
+                                <div class="display_links ajax" type="Finance Code" method="hold" finance_code_id="{{finance_code_id}}" contractor_id="{{contractor_id}}" pay_run_id="{{pay_run_id}}" cycle_id="{{cycle_id}}" feedback="{{contractor_id}}_{{finance_code_id}}_holding">
+                                    Hold Finance Code
+                                </div>
+                                <div class="display_links hide {{contractor_id}}_{{finance_code_id}}_holding">
+                                    Holding<div class="feedback_loader"></div>
+                                </div>
+                            {% endif %}
+                        {% endif_has_permission %}
+                        <div style="clear:both"></div>
+                    </span>
+                    <ul class="paylines hide {{contractor_id}}_{{finance_code_id}}_paylines">
+                        {% for payline in finance_code_data.paylines %}
+                            <li>
+                                <span>
+                                    <div class="display_main">
+                                        {% if payline.query_string and config.url %}
+                                            <a href="{{config.url}}{{payline.query_string}}" target="new">{{payline.details}}</a>
+                                        {% else %}
+                                            {{payline.details}}
+                                        {% endif %}
+                                    </div>
+                                    <div class="display_manual">{% if payline.manual %}<div class="manual"></div>{% endif %}</div>
+                                    <div class="display_pdf"></div>
+                                    <div class="display_value">{{payline.value|floatformat:2|dollarformat}}</div>
+                                    <div class="display_gst">{{payline.gst_value|floatformat:2|dollarformat}}</div>
+                                    {% if_has_permission 'direct.pays.admin' request.info.current_projectname %}
+                                        {% if not current_cycle.locked %}
+                                                <div class="display_links ajax remove" type="Payline" method="remove" payline_id="{{payline.id}}" feedback="{{payline.id}}_removing"></div>
+                                                <div class="display_links hide {{payline.id}}_removing">
+                                                    <div class="feedback_loader"></div>
+                                                </div>
+                                                <div class="display_links ajax" type="Payline" method="hold" payline_id="{{payline.id}}" feedback="{{payline.id}}_holding">Hold Payline</div>
+                                                <div class="display_links hide {{payline.id}}_holding">
+                                                    Holding<div class="feedback_loader"></div>
+                                                </div>
+                                        {% endif %}
+                                    {% endif_has_permission %}
+                                    <div style="clear:both"></div>
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+{% for t in totals %}
+    <li>
+        <span class="finance_code">
+            <div class="display_main">{{t.finance_code__description}}</div>
+            <div class="display_value">{{t.value_sum|floatformat:2|dollarformat}}</div>
+            <div class="display_gst">{{t.gst_value_sum|floatformat:2|dollarformat}}</div>
+            <div style="clear:both"></div>
+        </span>
+    </li>
+{% endfor %}
+
+{% for contractor_id, contractor_data in held_paylines.items %}
+    <li>
+        <span child="{{contractor_id}}_held_finance_codes">
+            <div class="display_main expand">Payroll: {{contractor_data.contractor.payroll}} | Sales Code: {{contractor_data.contractor.sales_code}} | {{contractor_data.contractor.name}}</div>
+            <div class="display_manual"></div>
+            <div class="display_pdf"></div>
+            <div class="display_value">{{contractor_data.total|floatformat:2|dollarformat}}</div>
+            <div class="display_gst">{{contractor_data.total_gst|floatformat:2|dollarformat}}</div>
+            {% if not current_cycle.locked %}
+                <div class="display_links ajax" type="Contractor" method="unhold" contractor_id="{{contractor_id}}" pay_run_id="{{pay_run_id}}" cycle_id="{{cycle_id}}" feedback="{{contractor_id}}_unholding">
+                    Unhold Contractor
+                </div>
+                <div class="display_links hide {{contractor_id}}_unholding">
+                    Unholding<div class="feedback_loader"></div>
+                </div>
+            {% endif %}
+            <div style="clear:both"></div>
+        </span>
+        <ul class="finance_codes hide {{contractor_id}}_held_finance_codes">
+            {% for finance_code_id, finance_code_data in contractor_data.finance_codes.items %}
+                <li>
+                    <span child="{{contractor_id}}_{{finance_code_id}}_held_paylines">
+                        <div class="display_main expand">{{finance_code_data.finance_code.description}}</div>
+                        <div class="display_manual"></div>
+                        <div class="display_pdf"></div>
+                        <div class="display_value">{{finance_code_data.total|floatformat:2|dollarformat}}</div>
+                        <div class="display_gst">{{finance_code_data.total_gst|floatformat:2|dollarformat}}</div>
+                        {% if not current_cycle.locked %}
+                            <div class="display_links ajax" type="Finance Code" method="unhold" finance_code_id="{{finance_code_id}}" contractor_id="{{contractor_id}}" pay_run_id="{{pay_run_id}}" cycle_id="{{cycle_id}}" feedback="{{contractor_id}}_{{finance_code_id}}_unholding">
+                                Unhold Finance Code
+                            </div>
+                            <div class="display_links hide {{contractor_id}}_{{finance_code_id}}_unholding">
+                                Unholding<div class="feedback_loader"></div>
+                            </div>
+                        {% endif %}
+                        <div style="clear:both"></div>
+                    </span>
+                    <ul class="paylines hide {{contractor_id}}_{{finance_code_id}}_held_paylines">
+                        {% for payline in finance_code_data.paylines %}
+                            <li>
+                                <span>
+                                    <div class="display_main">{{payline.details}}</div>
+                                    <div class="display_manual"></div>
+                                    <div class="display_pdf"></div>
+                                    <div class="display_value">{{payline.value|floatformat:2|dollarformat}}</div>
+                                    <div class="display_gst">{{payline.gst_value|floatformat:2|dollarformat}}</div>
+                                    {% if not current_cycle.locked %}
+                                        <div class="display_links ajax" type="Payline" method="unhold" payline_id="{{payline.id}}" feedback="{{payline.id}}_unholding">Unhold Payline</div>
+                                        <div class="display_links hide {{payline.id}}_unholding">
+                                            Unholding<div class="feedback_loader"></div>
+                                        </div>
+                                    {% endif %}
+                                    <div style="clear:both"></div>
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}

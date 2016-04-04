@@ -1,0 +1,12 @@
+[Unit]
+Description=Direct Sales pays calculation service
+After=syslog.target
+
+[Service]
+ExecStart=/srv/django/direct/direct/pays/calculate.py
+Restart=always
+Type=simple
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target

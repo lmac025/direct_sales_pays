@@ -1,0 +1,16 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{{ title }} {% trans ' - Upload Paylines' %}{% endblock %}
+{% block content %}
+    <form action="{% url "pays.views.pays.upload" request.info.current_projectname %}" method="post" enctype="multipart/form-data">
+        <div class="row-fluid">
+            <div class="span4 offset4">
+                {{form.as_table}}
+                <div class="form-actions">
+                    <input type="Submit" class="btn btn-primary" value="Add Paylines">
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}

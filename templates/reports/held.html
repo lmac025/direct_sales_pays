@@ -1,0 +1,33 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{% endblock %}
+{% block content %}
+    <div class="row-fluid">
+        <div class="span8 offset2">
+            <div class="progress progress-striped active"><div class="bar"></div></div>
+            <input type="hidden" class="count" value="{{ locations|length }}" />
+            {% for l in locations %}
+                <input type="hidden" class="location" value="{{ l.id }}" />
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        var count = $('.count').val()
+        var step = (1/count)*100
+        var perc = 0
+        function load(el) {
+            perc = perc + step
+            $('.progress .bar').attr('style', 'width:'+perc+'%')
+            var form = $('<form action="'+'/direct/pays/{{request.info.current_projectname}}/reports/held/'+$(el).val()+'/'+'" method="POST" id="form"></form>')
+            $('body').append(form)
+            $('#form').submit().remove()
+
+        }
+        $(function() {
+            $('.location').each(function(k,el) {
+                setTimeout(function() {load(el)}, k*60000)
+            })
+        })
+    </script>
+{% endblock %}

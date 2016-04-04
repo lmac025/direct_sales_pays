@@ -1,0 +1,49 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{{ title }} {% trans ' - View Cost Accounts' %}{% endblock %}
+{% block appwidgets %}
+    <div class="widget-container" id="appwidgets">
+        <div class="widget-row">
+            <div class="widget widget-right">
+                <a class="btn clickable" data-get="{% url "direct.pays.views.admin.cost_accounts_add" request.info.current_projectname %}"><i class="icon-plus"></i>&nbsp;Add New</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <div class="row-fluid">
+        <div class="span10 offset1">
+            <table class="table">
+                <tr>
+                    <th>Location</th>
+                    <th>Cost Account</th>
+                    <th>CAT 2</th>
+                    <th>CAT 3</th>
+                    <th>CAT 4</th>
+                </tr>
+                {% for cost_account in cost_accounts %}
+                    <tr class="clickable" data-get="{% url "direct.pays.views.admin.cost_accounts_edit" request.info.current_projectname cost_account.id %}">
+                        <td class="load-location">{{ cost_account.location }}</td>
+                        <td class="load-cost_account">{{ cost_account.cost_account }}</td>
+                        <td class="load-cost_category_2">{{ cost_account.cost_category_2 }}</td>
+                        <td class="load-cost_category_3">{{ cost_account.cost_category_3 }}</td>
+                        <td class="load-cost_category_4">{{ cost_account.cost_category_4 }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="add hide" data-get="{% url "direct.pays.views.admin.cost_accounts_edit" request.info.current_projectname "00" %}">
+                    <td class="load-location"></td>
+                    <td class="load-cost_account"></td>
+                    <td class="load-cost_category_2"></td>
+                    <td class="load-cost_category_3"></td>
+                    <td class="load-cost_category_4"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <script>
+        $(function() {
+            $('.clickable').coloader({postLoad: post_load_fn})
+        })
+    </script>
+{% endblock %}

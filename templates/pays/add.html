@@ -1,0 +1,107 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{{ title }} {% trans ' - Add Payline' %}{% endblock %}
+{% block content %}
+    {% load functions %}
+    <form action="{% url "pays.views.pays.add" request.info.current_projectname %}" method="post">
+        <div class="row-fluid">
+            <div class="span6 offset3">
+                <table class="table table-unbordered table-condensed">
+                    <tr>
+                        <td>
+                            {{ form.cycle|render_label }}
+                            {{ form.cycle.errors }}
+                            {{ form.cycle }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{ form.finance_code|render_label }}
+                            {{ form.finance_code.errors }}
+                            {{ form.finance_code }}
+                        </td>
+                        <td>
+                            {{ form.location|render_label }}
+                            {{ form.location.errors }}
+                            {{ form.location }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            {{ form.contractor|render_label }}
+                            {{ form.contractor.errors }}
+                            {{ form.contractor }}
+                            <input type="text" class="payroll_number" name="payroll_number" target="contractor" value="{{payroll_number}}" size="10" />                            
+                            <div class="sml_loader" id="contractor_loader"></div>
+                            <div id="contractor" class="well well-small"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{ form.value|render_label }}
+                            {{ form.value.errors }}
+                            {{ form.value }}
+                        </td>
+                        <td>
+                            {{ form.gst_value|render_label }}
+                            {{ form.gst_value.errors }}
+                            {{ form.gst_value }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            {{ form.details|render_label }}
+                            {{ form.details.errors }}
+                            {{ form.details }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{ form.external_record_id|render_label }}
+                            {{ form.external_record_id.errors }}
+                            {{ form.external_record_id }}
+                        </td>
+                        <td>
+                            {{ form.application_id|render_label }}
+                            {{ form.application_id.errors }}
+                            {{ form.application_id }}
+                        </td>
+                    </tr>
+                </table>
+                <div class="form-actions">
+                    <input type="Submit" class="btn btn-primary" value="Add">
+                </div>
+            </div>
+        </div>
+    </form>
+    <script>
+        $(document).ready(function() {
+            $('.payroll_number').keyup(function(e) {
+                var payroll_number = $(this).val()
+                var target = $(this).attr('target')
+                var sale_date = get_date_now()
+                // if no start date then today.
+                if (payroll_number.length>=5) {
+                    $('#'+target+'_loader').show()
+                    $.ajax({
+                        url: '{% url "direct.end_points.views.ajax.find_sc" request.info.current_projectname %}?payroll_number='+payroll_number+'&sale_date='+sale_date,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(json) {
+                            $('#'+target).html(json.sc)
+                            $('#id_'+target).val(json.sc_id)
+                            $('#'+target+'_loader').hide()
+                        }
+                    })
+                } else {
+                    $('#id_'+target).val('')
+                    $('#'+target).html('')
+                }
+            })
+            
+            $('.payroll_number').keyup()
+
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% block title %}{{ title }} {% trans ' - View Finance Codes' %}{% endblock %}
+{% block appwidgets %}
+<div class="widget-container" id="appwidgets">
+        <div class="widget-row">
+            <div class="widget widget-right">
+                <a class="btn clickable" data-get="{% url "direct.pays.views.admin.finance_codes_add" request.info.current_projectname %}"><i class="icon-plus"></i>&nbsp;Add New</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <div class="row-fluid">
+        <div class="span10 offset1">
+            <table class="table">
+                <tr>
+                    <th>Finance Code Id</th>
+                    <th>Finance Code</th>
+                    <th>Aurion Finance Code</th>
+                    <th>Description</th>
+                </tr>
+                {% for finance_code in finance_codes %}
+                    <tr class="clickable" data-get="{% url "direct.pays.views.admin.finance_codes_edit" request.info.current_projectname finance_code.id %}">
+                        <td class="load-id">{{ finance_code.id }}</td>
+                        <td class="load-finance_code">{{ finance_code.finance_code }}</td>
+                        <td class="load-aurion_finance_code">{{ finance_code.aurion_finance_code }}</td>
+                        <td class="load-description">{{ finance_code.description }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="add hide" data-get="{% url "direct.pays.views.admin.finance_codes_edit" request.info.current_projectname "00" %}">
+                    <td class="load-id"></td>
+                    <td class="load-finance_code"></td>
+                    <td class="load-aurion_finance_code"></td>
+                    <td class="load-description"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <script>
+        $(function() {
+            $('.clickable').coloader({postLoad: post_load_fn})
+        })
+    </script>
+{% endblock %}

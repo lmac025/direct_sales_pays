@@ -1,0 +1,219 @@
+{% extends "pays/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% load humanize %}
+{% load functions %}
+{% block title %}{{ title }} {% trans ' - Home' %}{% endblock %}
+{% block appwidgets %}
+    <div class="widget-container" id="appwidgets">
+        <div class="widget-row">
+            <div class="widget widget-right">
+                <a href="{% url "direct.pays.views.reports.held" request.info.current_projectname %}?l={{location}}" class="btn" data-requires="direct.pays.admin"><i class="icon-file"></i>&nbsp;Held Pays Extract</a>
+            </div>
+            {% if not current_cycle.calc_date == None %}
+                <div class="widget widget-right">
+                    <a href="{% url "direct.pays.views.reports.paylines" request.info.current_projectname current_cycle.id %}?l={{location}}" class="btn"><i class="icon-file"></i>&nbsp;Payline Extract</a>
+                </div>
+                <div class="widget widget-right">
+                    <a href="{% url "direct.pays.views.reports.payline_summary" request.info.current_projectname current_cycle.id %}?l={{location}}" class="btn" data-requires="direct.pays.admin"><i class="icon-file"></i>&nbsp;Payline Summary</a>
+                </div>
+                <div class="widget widget-right">
+                    <a href="{% url "direct.pays.views.reports.payroll_files" request.info.current_projectname current_cycle.id %}" class="btn" data-requires="direct.pays.admin"><i class="icon-file"></i>&nbsp;Payroll Files</a>
+                </div>
+            {% endif %}
+            {% if not current_cycle.pay_date == None %}
+                {% if not config.tax_invoice == None %}
+                    <div class="widget widget-right">
+                        <a href="{% url "direct.pays.views.reports.tax_invoices" request.info.current_projectname current_cycle.id %}?l={{location}}" class="btn" data-requires="direct.pays.admin"><i class="icon-file"></i>&nbsp;Tax Invoice</a>
+                    </div>
+                {% endif %}
+                {% if not config.commission_statement == None %}
+                    <div class="widget widget-right">
+                        <a href="{% url "direct.pays.views.reports.commission_statements" request.info.current_projectname current_cycle.id %}?l={{location}}" class="btn" data-requires="direct.pays.admin"><i class="icon-file"></i>&nbsp;Commission Statements</a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="widget-row">
+            <div class="widget">
+                <div class="input-prepend">
+                    <label class="add-on" for="id_c">Cycle</label>
+                    {{ form.c }}
+                </div>
+            </div>
+            <div class="widget">
+                <div class="input-prepend">
+                    <label class="add-on" for="id_l">Location</label>
+                    {{ form.l }}
+                </div>
+            </div>
+            {% if not current_cycle.locked %}
+                <div class="widget">
+                    <input type="button" value="Process Pays" class="btn btn-primary form-submit">
+                </div>
+                {% if not current_cycle.pay_date == None %}
+                    <div class="widget widget-right">
+                        <a href="{% url "direct.pays.views.pays.lock" request.info.current_projectname current_cycle.id %}" class="btn btn-danger" data-requires="direct.pays.admin"><i class="icon-lock"></i>&nbsp;Lock Cycle</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="widget widget-right">
+                    <a href="{% url "direct.pays.views.pays.unlock" request.info.current_projectname current_cycle.id %}" class="btn btn-danger" data-requires="direct.pays.admin"><i class="icon-lock"></i>&nbsp;Unlock Cycle</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+{% block content %}
+    <form id="form" action="{% url "pays.views.pays.calculate" request.info.current_projectname current_cycle.id%}" method="POST"></form>
+    <div class="row-fluid">
+        <div class="span4 offset1">
+            <table class="table table-condensed">
+                <tr><td>Bonus Range:</td><td>{{current_cycle.bonus_start_date|date:"d-M"}} to {{current_cycle.bonus_end_date|date:"d-M"}}</td></tr>
+                <tr><td>Cancellation Range:</td><td>{{current_cycle.cancel_start_date|date:"d-M"}} to {{current_cycle.cancel_end_date|date:"d-M"}}</td></tr>
+                <tr><td>Commission Date:</td><td>{{current_cycle.cycle_date|date:"d-M-Y"}}</td></tr>
+                <tr><td>Calculation Date:</td><td>{{current_cycle.calc_date|date:"d-M-Y"}}</td></tr>
+                <tr><td>Pay Date:</td><td>{{current_cycle.pay_date|date:"d-M-Y"}}</td></tr>
+            </table>
+        </div>
+    </div>
+    {% for pay_run in pay_runs %}
+        <div class="row-fluid">
+            <div class="pay_run span10 offset1 {% if pay_run.failed %}failed{% else %}{%if pay_run.approved %}approved{% endif %}{% endif %}">
+                <span class="header" pay_run_id="{{pay_run.id}}" cycle_id="{{current_cycle.id}}">{{pay_run.created_by}} - {{pay_run.created_date|naturalday|capwords}}, {{pay_run.created_date|date:"H:i a"}}</span>
+                {% if pay_run.id == pay_run_id %}
+                        <div class="progress progress-striped active" style="margin:20px;"><div class="bar" style="width:0%;"></div></div>
+                        <ul class="contractors" id="paylines">
+                        </ul>
+                        <span class="sub_header">Totals</span>
+                        <ul class="total_finance_codes" id="totals">
+                        </ul>
+                        <span class="sub_header" data-requires="direct.pays.admin">Held Pays</span>
+                        <ul class="contractors" id="held_paylines" data-requires="direct.pays.admin">
+                        </ul>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    <script>
+        $('#id_c,#id_l').change(function() {
+            var cycle_id = $('#id_c').val()
+            var location_id = $('#id_l').val()
+            window.location = '?c='+cycle_id+'&l='+location_id
+        })
+
+        $('.header').click(function() {
+            var cycle_id = $(this).attr('cycle_id')
+            var pay_run_id = $(this).attr('pay_run_id')
+            window.location = '?c='+cycle_id+'&pr='+pay_run_id
+        })
+
+        $(function() {
+            $('.form-submit').click(function() { $('#form').submit() })
+            $.ajax({
+                url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?type=contractors&l={{location}}',
+                <!-- url: 'http://edgy:9002/{{request.info.current_projectname}}/{{current_cycle.id}}/{{pay_run_id}}/contractors/', -->
+                type: 'GET',
+                dataType: 'json',
+                success: function(json) {
+                    l = json.length
+                    if (l==0) { $('.progress').hide() }
+                    
+                    <!-- ajax_chunks(json, json.length) -->
+                    $.each(json, function(k, id) {
+                        <!-- id = data['id'] -->
+                        $('#paylines').prepend('<div id="pays'+id+'"></div>')
+                        $('#held_paylines').prepend('<div id="held'+id+'"></div>')
+                        $.ajax({
+                            url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?id='+id+'&type=paylines&l={{location}}',
+                            <!-- url: 'http://edgy:9002/{{request.info.current_projectname}}/{{current_cycle.id}}/{{pay_run_id}}/'+id+'/paylines/', -->
+                            type: 'GET',
+                            dataType: 'html',
+                            success: function(html) {
+                                $('#pays'+id).after(html)
+                                $('#pays'+id).remove()
+                                l--
+                                progress = ((json.length - l)/json.length)*100
+                                $('.progress .bar').attr('style','width:'+progress+'%')
+                                if(l==0) {
+                                    $.ajax({
+                                        url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?type=totals&l={{location}}',
+                                        type: 'GET',
+                                        dataType: 'html',
+                                        success: function(html) {
+                                            $('#totals').html(html)
+                                            $('.progress').hide()
+                                            init('{{request.info.current_projectname}}')
+                                        }
+                                    })
+                                }
+                            }
+                        })
+                        $.ajax({
+                            url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?id='+id+'&type=held_paylines&l={{location}}',
+                            <!-- url: 'http://edgy:9002/{{request.info.current_projectname}}/{{current_cycle.id}}/{{pay_run_id}}/'+id+'/held/', -->
+                            type: 'GET',
+                            dataType: 'html',
+                            success: function(html) {
+                                $('#held'+id).after(html)
+                                $('#held'+id).remove()
+                            }
+                        })
+                    })
+                }
+            });
+
+            <!-- function ajax_chunks(data, len) { -->
+            <!--     if (data.length > 20) { -->
+            <!--         var new_data = data.slice(0,20) -->
+            <!--         var remaining = data.slice(20) -->
+            <!--     } else { -->
+            <!--         new_data = data -->
+            <!--     } -->
+            <!--     var i = 0 -->
+            <!--     $.each(new_data, function(k, data) { -->
+            <!--         id = data['id'] -->
+            <!--         $('#paylines').prepend('<div id="pays'+id+'"></div>') -->
+            <!--         $('#held').prepend('<div id="held'+id+'"></div>') -->
+            <!--         $.ajax({ -->
+            <!--             <1!-- url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?id='+id+'&type=paylines', --1> -->
+            <!--             url: 'http://edgy:9002/{{request.info.current_projectname}}/{{current_cycle.id}}/{{pay_run_id}}/'+id+'/paylines/', -->
+            <!--             type: 'GET', -->
+            <!--             dataType: 'html', -->
+            <!--             success: function(html) { -->
+            <!--                 $('#pays'+id).after(html) -->
+            <!--                 $('#pays'+id).remove() -->
+            <!--                 l-- -->
+            <!--                 i++ -->
+            <!--                 progress = ((len - l)/len)*100 -->
+            <!--                 $('.progress .bar').attr('style','width:'+progress+'%') -->
+            <!--                 console.log(i) -->
+            <!--                 if(l==0) { -->
+            <!--                     $.ajax({ -->
+            <!--                         url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?type=totals', -->
+            <!--                         type: 'GET', -->
+            <!--                         dataType: 'html', -->
+            <!--                         success: function(html) { -->
+            <!--                             $('#totals').html(html) -->
+            <!--                             $('.progress').hide() -->
+            <!--                             init('{{request.info.current_projectname}}') -->
+            <!--                         } -->
+            <!--                     }) -->
+            <!--                 } -->
+            <!--             } -->
+            <!--         }) -->
+            <!--         $.ajax({ -->
+            <!--             <1!-- url: '{% url "direct.pays.views.ajax.fetch_paylines" request.info.current_projectname current_cycle.id pay_run_id %}?id='+id+'&type=held_paylines', --1> -->
+            <!--             url: 'http://edgy:9002/{{request.info.current_projectname}}/{{current_cycle.id}}/{{pay_run_id}}/'+id+'/held/', -->
+            <!--             type: 'GET', -->
+            <!--             dataType: 'html', -->
+            <!--             success: function(html) { -->
+            <!--                 $('#held'+id).after(html) -->
+            <!--                 $('#held'+id).remove() -->
+            <!--             } -->
+            <!--         }) -->
+            <!--     }) -->
+            <!-- } -->
+        })
+    </script>
+{% endblock %}

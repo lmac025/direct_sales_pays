@@ -1,0 +1,86 @@
+{% load functions %}
+{% load url from future %}
+    {% for contractor_id, contractor_data in held_paylines.items %}
+        <li>
+            <span child="{{contractor_id}}_cycles">
+                <div class="display_held_main expand">Payroll: {{contractor_data.contractor.payroll}} | Sales Code: {{contractor_data.contractor.sales_code}} | {{contractor_data.contractor.name}}</div>
+                <div class="display_value">{{contractor_data.total|floatformat:2|dollarformat}}</div>
+                <div class="display_gst">{{contractor_data.total_gst|floatformat:2|dollarformat}}</div>
+                <div class="display_links ajax remove" type="Contractor" method="perm_hold" contractor_id="{{contractor_id}}" feedback="{{contractor_id}}_removing"></div>
+                <div class="display_links hide {{contractor_id}}_removing">
+                    <div class="feedback_loader"></div>
+                </div>
+                <div class="display_links" type="Contractor" method="release" contractor_id="{{contractor_id}}" feedback="{{contractor_id}}_releasing">
+                    {{form.c}}
+                </div>
+                <div class="display_links hide {{contractor_id}}_releasing">
+                    Releasing<div class="feedback_loader"></div>
+                </div>
+                <div style="clear:both"></div>
+            </span>
+            <ul class="cycles hide {{contractor_id}}_cycles">
+                {% for cycle_id, cycle_data in contractor_data.cycles.items %}
+                    <li>
+                        <span child="{{contractor_id}}_{{cycle_id}}_finance_codes">
+                            <div class="display_held_main expand">{{cycle_data.cycle.cycle_date}}</div>
+                            <div class="display_value">{{cycle_data.total|floatformat:2|dollarformat}}</div>
+                            <div class="display_gst">{{cycle_data.total_gst|floatformat:2|dollarformat}}</div>
+                            <div class="display_links ajax remove" type="Cycle" method="perm_hold" cycle_id="{{cycle_id}}" contractor_id="{{contractor_id}}" feedback="{{contractor_id}}_{{cycle_id}}_removing"></div>
+                            <div class="display_links hide {{contractor_id}}_{{cycle_id}}_removing">
+                                <div class="feedback_loader"></div>
+                            </div>
+                            <div class="display_links" type="Cycle" method="release" cycle_id="{{cycle_id}}" contractor_id="{{contractor_id}}" feedback="{{contractor_id}}_{{cycle_id}}_releasing">
+                                {{form.c}}
+                            </div>
+                            <div class="display_links hide {{contractor_id}}_{{cycle_id}}_releasing">
+                                Releasing<div class="feedback_loader"></div>
+                            </div>
+                            <div style="clear:both"></div>
+                        </span>
+                        <ul class="finance_codes hide {{contractor_id}}_{{cycle_id}}_finance_codes">
+                            {% for finance_code_id, finance_code_data in cycle_data.finance_codes.items %}
+                                <li>
+                                    <span child="{{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_paylines">
+                                        <div class="display_held_main expand">{{finance_code_data.finance_code.description}}</div>
+                                        <div class="display_value">{{finance_code_data.total|floatformat:2|dollarformat}}</div>
+                                        <div class="display_gst">{{finance_code_data.total_gst|floatformat:2|dollarformat}}</div>
+                                        <div class="display_links ajax remove" type="Finance Code" method="perm_hold" finance_code_id="{{finance_code_id}}" cycle_id="{{cycle_id}}" contractor_id="{{contractor_id}}" feedback="{{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_removing"></div>
+                                        <div class="display_links hide {{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_removing">
+                                            <div class="feedback_loader"></div>
+                                        </div>
+                                        <div class="display_links" type="Finance Code" method="release" finance_code_id="{{finance_code_id}}" cycle_id="{{cycle_id}}" contractor_id="{{contractor_id}}" feedback="{{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_releasing">
+                                            {{form.c}}
+                                        </div>
+                                        <div class="display_links hide {{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_releasing">
+                                            Releasing<div class="feedback_loader"></div>
+                                        </div>
+                                        <div style="clear:both"></div>
+                                    </span>
+                                    <ul class="paylines hide {{contractor_id}}_{{cycle_id}}_{{finance_code_id}}_paylines">
+                                        {% for payline in finance_code_data.paylines %}
+                                            <li>
+                                                <span>
+                                                    <div class="display_held_main">{{payline.details}}</div>
+                                                    <div class="display_value">{{payline.value|floatformat:2|dollarformat}}</div>
+                                                    <div class="display_gst">{{payline.gst_value|floatformat:2|dollarformat}}</div>
+                                                    <div class="display_links ajax remove" type="Payline" method="perm_hold" payline_id="{{payline.id}}" feedback="{{payline.id}}_removing"></div>
+                                                    <div class="display_links hide {{payline.id}}_removing">
+                                                        <div class="feedback_loader"></div>
+                                                    </div>
+                                                    <div class="display_links" type="Payline" method="release" payline_id="{{payline.id}}" feedback="{{payline.id}}_releasing">{{form.c}}</div>
+                                                    <div class="display_links hide {{payline.id}}_releasing">
+                                                        Releasing<div class="feedback_loader"></div>
+                                                    </div>
+                                                    <div style="clear:both"></div>
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
